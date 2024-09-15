@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bufio"
@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-func mergeFiles(leftFileName string, rightFileName string, sortedFilesChan chan<- string) {
+func MergeFiles(leftFileName string, rightFileName string, sortedFilesChan chan<- string) {
 	leftChan := make(chan uint32, 10)
 	rightChan := make(chan uint32, 10)
 	go consumeUint32s(leftFileName, leftChan)
@@ -18,7 +18,7 @@ func mergeFiles(leftFileName string, rightFileName string, sortedFilesChan chan<
 	right, rightAvailable := <-rightChan
 	var lastValue uint32
 	sentOne := false
-	writeBytes(func() (uint32, bool) {
+	WriteBytes(func() (uint32, bool) {
 		var ret uint32
 		for {
 			if leftAvailable {
@@ -53,7 +53,7 @@ func consumeUint32s(fromFileName string, to chan<- uint32) {
 	}
 	defer from.Close()
 
-	reader := bufio.NewReaderSize(from, ioBufferSize)
+	reader := bufio.NewReaderSize(from, IoBufferSize)
 
 	defer close(to)
 

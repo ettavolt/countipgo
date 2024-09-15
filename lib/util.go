@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bufio"
@@ -8,17 +8,16 @@ import (
 	"os"
 )
 
-const chunkSize = 0x1000000
-const ioBufferSize = 0x100000
+const ChunkSize = 0x1000000
+const IoBufferSize = 0x100000
 
-// Producer either outputs next number or indicates the end with true as the second return value.
-func writeBytes(producer func() (uint32, bool), sortedFilesChan chan<- string) {
+// WriteBytes expects producer to either output next number or indicate the end with true as the second return value.
+func WriteBytes(producer func() (uint32, bool), sortedFilesChan chan<- string) {
 	tmpfile, err := os.CreateTemp("", "sorted")
 	if err != nil {
 		log.Panic(err)
 	}
-	writer := bufio.NewWriterSize(tmpfile, ioBufferSize)
-	log.Println(tmpfile.Name())
+	writer := bufio.NewWriterSize(tmpfile, IoBufferSize)
 
 	var buf [4]byte
 	for {

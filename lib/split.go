@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-func readAndConvert(filePath string, splitFilesChan chan<- string) {
+func ConvertAndSplit(filePath string, splitFilesChan chan<- string) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Panicf("Failed to open file: %v", err)
@@ -29,10 +29,10 @@ func readAndConvert(filePath string, splitFilesChan chan<- string) {
 		ip = ip.To4() // Ensures it is an IPv4
 		num := binary.BigEndian.Uint32(ip)
 		chunk = append(chunk, num)
-		if len(chunk) >= chunkSize {
+		if len(chunk) >= ChunkSize {
 			wg.Add(1)
 			go sortAndWrite(chunk, &wg, splitFilesChan)
-			chunk = make([]uint32, 0, chunkSize) // Reset chunk
+			chunk = make([]uint32, 0, ChunkSize) // Reset chunk
 		}
 	}
 
@@ -51,7 +51,7 @@ func sortAndWrite(chunk []uint32, wg *sync.WaitGroup, sortedFilesChan chan<- str
 	sort.Slice(chunk, func(i, j int) bool { return chunk[i] < chunk[j] })
 	j := 0
 	i := -1
-	writeBytes(func() (uint32, bool) {
+	WriteBytes(func() (uint32, bool) {
 		for {
 			i++
 			if i >= len(chunk) {

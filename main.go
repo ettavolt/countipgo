@@ -5,16 +5,25 @@ import (
 	"log"
 	"os"
 	"sync/atomic"
+
+	"github.com/ettavolt/countipgo/lib"
 )
 
+// This is the dispatcher. It invokes splitter-converter,
+// then takes its output and performs a series of merges.
+// There are two constants in util.go that could be tuned for performance.
 func main() {
 	path := os.Args[1]
 	splitFilesChan := make(chan string)
 	sortedFilesChan := make(chan string)
 
-	go readAndConvert(path, splitFilesChan)
+	go lib.ConvertAndSplit(path, splitFilesChan)
 
 	queueSize := atomic.Int32{}
+	// There could be a way to achieve synchronization without the empty file at the end,
+	// but it will be much more complex.
+	// Supposedly, for a substantial processing task, empty file will be merged with a smaller split-off,
+	// rather than a late-generation merge.
 	queueSize.Store(1)
 	go func() {
 		for fileName := range splitFilesChan {
@@ -22,7 +31,7 @@ func main() {
 			sortedFilesChan <- fileName
 		}
 		// Send empty file to decrease the initial 1 in the queue.
-		writeBytes(func() (uint32, bool) {
+		lib.WriteBytes(func() (uint32, bool) {
 			return 0, true
 		}, sortedFilesChan)
 	}()
@@ -35,7 +44,7 @@ func main() {
 			leftFile = file
 		} else {
 			// Don't change the queue size, we're adding one more file
-			go mergeFiles(leftFile, file, sortedFilesChan)
+			go lib.MergeFiles(leftFile, file, sortedFilesChan)
 			leftFile = ""
 		}
 	}
